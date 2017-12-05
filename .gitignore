@@ -1,6 +1,7 @@
 # Project specific files
 venv
 config.ini
+modules/__pycache__
 
 # IDE specific files
 .idea/

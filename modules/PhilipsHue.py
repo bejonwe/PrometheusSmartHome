@@ -14,8 +14,17 @@ def init(c = []):
 
     metrics = {}
     metrics['lights'] = {}
-    metrics['lights']['on'] = Gauge('philipshue_light_on', 'Philips Hue light on/off state', ['id','name'])
+    metrics['lights']['on'] = Gauge('philipshue_light_on', 'Philips Hue light on/off state', ['id','name','type'])
+    metrics['lights']['reachable'] = Gauge('philipshue_light_reachable', 'Philips Hue light wether it''s reachable or not', ['id','name','type'])
+    metrics['lights']['brightness_8bit'] = Gauge('philipshue_light_brightness_8bit', 'Philips Hue light brightness in 8bit (1-254)', ['id','name','type'])
+    metrics['lights']['brightness_percent'] = Gauge('philipshue_light_brightness_percent', 'Philips Hue light brightness in percent', ['id','name','type'])
+    metrics['lights']['colortemp_mired'] = Gauge('philipshue_light_colortemp_mired', 'Philips Hue light mired colortemp', ['id','name','type'])
+    metrics['lights']['colortemp_kelvin'] = Gauge('philipshue_light_colortemp_kelvin', 'Philips Hue light colortemp in kelvin', ['id','name','type'])
 
+    metrics['sensors'] = {}
+    metrics['sensors']['on'] = Gauge('philipshue_sensor_on', 'Philips Hue sensor on/off state', ['id','name','type'])
+    metrics['sensors']['battery'] = Gauge('philipshue_sensor_battery_percent', 'Philips Hue sensor battery in percent', ['id','name','type'])
+    metrics['sensors']['reachable'] = Gauge('philipshue_sensor_reachable', 'Philips Hue sensor wether it''s reachable or not', ['id','name','type'])
 
 def getdata():
     global config
@@ -23,9 +32,28 @@ def getdata():
     global b
 
     lights = b.get_light_objects('id')
+    sensors = b.get_sensor_objects()
 
-
+    for s in sensors:
+        if s.type == 'ZLLSwitch':
+            metrics['sensors']['on'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.config['on'])
+            metrics['sensors']['battery'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.config['battery'])
+            if s.config['reachable']:
+                metrics['sensors']['reachable'].labels(id=s.sensor_id, name=s.name, type=s.type).set(1)
+            else:
+                metrics['sensors']['reachable'].labels(id=s.sensor_id, name=s.name, type=s.type).set(0)
 
     for light in lights:
         l = lights[light]
-        metrics['lights']['on'].labels(id=l.light_id, name=l.name).set(l.on)
+        metrics['lights']['on'].labels(id=l.light_id, name=l.name, type=l.type).set(l.on)
+        metrics['lights']['brightness_8bit'].labels(id=l.light_id, name=l.name, type=l.type).set(l.brightness)
+        metrics['lights']['brightness_percent'].labels(id=l.light_id, name=l.name, type=l.type).set(round((l.brightness-1)*0.395256917))
+
+        if l.reachable:
+            metrics['lights']['reachable'].labels(id=l.light_id, name=l.name, type=l.type).set(1)
+        else:
+            metrics['lights']['reachable'].labels(id=l.light_id, name=l.name, type=l.type).set(0)
+
+        if l.type == 'Color temperature light':
+            metrics['lights']['colortemp_mired'].labels(id=l.light_id, name=l.name, type=l.type).set(l.colortemp)
+            metrics['lights']['colortemp_kelvin'].labels(id=l.light_id, name=l.name, type=l.type).set(l.colortemp_k)
