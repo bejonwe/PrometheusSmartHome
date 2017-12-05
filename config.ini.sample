@@ -1,0 +1,5 @@
+[PhilipsHue]
+enabled = yes
+interval = 5
+bridgeip =
+username =
