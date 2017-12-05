@@ -1,2 +1,6 @@
+# Project specific files
 venv
 config.ini
+
+# IDE specific files
+.idea/
