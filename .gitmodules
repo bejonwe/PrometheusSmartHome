@@ -1,3 +1,0 @@
-[submodule "homematicip"]
-	path = homematicip
-	url = git@github.com:bejonwe/homematicip-rest-api.git

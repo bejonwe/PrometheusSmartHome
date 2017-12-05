@@ -1,3 +1,4 @@
 apscheduler
 prometheus_client
 phue
+git+https://github.com/coreGreenberet/homematicip-rest-api@master#egg=homematicip

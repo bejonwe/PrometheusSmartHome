@@ -1,5 +1,5 @@
 from prometheus_client import Gauge
-import homematicip
+from homematicip.home import Home
 
 
 def init(c = []):
@@ -9,10 +9,9 @@ def init(c = []):
 
     config = c
 
-    homematicip.init(config["accesspointid"])
-    homematicip.set_auth_token(config["authtoken"])
-
-    h = homematicip.Home()
+    h = Home()
+    h.set_auth_token(config["authtoken"])
+    h.init(config["accesspointid"])
 
     metrics = {}
     metrics['heating'] = {}
