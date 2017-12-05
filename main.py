@@ -15,7 +15,7 @@ if __name__ == '__main__':
     scheduler = BackgroundScheduler()
 
     config = configparser.ConfigParser()
-    config.read("config.ini")
+    config.read("config/config.ini")
     for moduleName in config.sections():
         if config[moduleName]['enabled'] == 'yes':
             print("Modul " + moduleName + " enabled!")
