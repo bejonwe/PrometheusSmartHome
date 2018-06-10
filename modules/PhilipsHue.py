@@ -42,13 +42,22 @@ def getdata():
     sensors = b.get_sensor_objects()
 
     for s in sensors:
-        if s.type == 'ZLLSwitch':
+        if s.type in  ['ZLLSwitch','ZLLTemperature'] :
             metrics['sensors']['on'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.config['on'])
-            metrics['sensors']['battery'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.config['battery'])
+            if s.config['battery'] is not None:
+                metrics['sensors']['battery'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.config['battery'])
             if s.config['reachable']:
                 metrics['sensors']['reachable'].labels(id=s.sensor_id, name=s.name, type=s.type).set(1)
             else:
                 metrics['sensors']['reachable'].labels(id=s.sensor_id, name=s.name, type=s.type).set(0)
+            if s.type == 'ZLLTemperature':
+                metrics['sensors']['temperature'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.state['temperature']/100)
+        if s.type == 'ZLLLightLevel':
+                metrics['sensors']['lightlevel'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.state['lightlevel'])
+        if s.type == 'ZLLPresence':
+                metrics['sensors']['presence'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.state['presence'])
+
+
 
     for light in lights:
         l = lights[light]
