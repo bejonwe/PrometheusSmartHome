@@ -1,5 +1,6 @@
 from prometheus_client import Gauge
 from phue import Bridge
+import os
 
 def init(c = []):
     global config
@@ -8,7 +9,10 @@ def init(c = []):
 
     config = c
 
-    b = Bridge(config['bridgeip'], config['username'])
+
+    bridgeip = os.getenv('BRIDGEIP', '127.0.0.1')
+    username = os.getenv('HUEUSERNAME', 'XXXXXX')
+    b = Bridge(bridgeip, username)
     b.connect()
     #lights = b.get_light_objects('id')
 
@@ -24,6 +28,9 @@ def init(c = []):
     metrics['sensors'] = {}
     metrics['sensors']['on'] = Gauge('philipshue_sensor_on', 'Philips Hue sensor on/off state', ['id','name','type'])
     metrics['sensors']['battery'] = Gauge('philipshue_sensor_battery_percent', 'Philips Hue sensor battery in percent', ['id','name','type'])
+    metrics['sensors']['temperature'] = Gauge('philipshue_sensor_temperature', 'Philips Hue sensor temperature', ['id','name','type'])
+    metrics['sensors']['lightlevel'] = Gauge('philipshue_sensor_lightlevel', 'Philips Hue sensor lightlevel', ['id','name','type'])
+    metrics['sensors']['presence'] = Gauge('philipshue_sensor_presence', 'Philips Hue sensor presence', ['id','name','type'])
     metrics['sensors']['reachable'] = Gauge('philipshue_sensor_reachable', 'Philips Hue sensor wether it''s reachable or not', ['id','name','type'])
 
 def getdata():
@@ -35,13 +42,22 @@ def getdata():
     sensors = b.get_sensor_objects()
 
     for s in sensors:
-        if s.type == 'ZLLSwitch':
+        if s.type in  ['ZLLSwitch','ZLLTemperature'] :
             metrics['sensors']['on'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.config['on'])
-            metrics['sensors']['battery'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.config['battery'])
+            if s.config['battery'] is not None:
+                metrics['sensors']['battery'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.config['battery'])
             if s.config['reachable']:
                 metrics['sensors']['reachable'].labels(id=s.sensor_id, name=s.name, type=s.type).set(1)
             else:
                 metrics['sensors']['reachable'].labels(id=s.sensor_id, name=s.name, type=s.type).set(0)
+            if s.type == 'ZLLTemperature':
+                metrics['sensors']['temperature'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.state['temperature']/100)
+        if s.type == 'ZLLLightLevel':
+                metrics['sensors']['lightlevel'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.state['lightlevel'])
+        if s.type == 'ZLLPresence':
+                metrics['sensors']['presence'].labels(id=s.sensor_id, name=s.name, type=s.type).set(s.state['presence'])
+
+
 
     for light in lights:
         l = lights[light]
@@ -54,6 +70,6 @@ def getdata():
         else:
             metrics['lights']['reachable'].labels(id=l.light_id, name=l.name, type=l.type).set(0)
 
-        if l.type == 'Color temperature light':
+        if l.type in ['Color temperature light','Extended color light']:
             metrics['lights']['colortemp_mired'].labels(id=l.light_id, name=l.name, type=l.type).set(l.colortemp)
             metrics['lights']['colortemp_kelvin'].labels(id=l.light_id, name=l.name, type=l.type).set(l.colortemp_k)
