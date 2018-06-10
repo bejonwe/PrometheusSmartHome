@@ -1,5 +1,6 @@
 from prometheus_client import Gauge
 from phue import Bridge
+import os
 
 def init(c = []):
     global config
@@ -8,7 +9,10 @@ def init(c = []):
 
     config = c
 
-    b = Bridge(config['bridgeip'], config['username'])
+
+    bridgeip = os.getenv('BRIDGEIP', '127.0.0.1')
+    username = os.getenv('HUEUSERNAME', 'XXXXXX')
+    b = Bridge(bridgeip, username)
     b.connect()
     #lights = b.get_light_objects('id')
 
