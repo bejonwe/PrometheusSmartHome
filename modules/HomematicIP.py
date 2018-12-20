@@ -34,6 +34,9 @@ def getdata():
     global h
 
     if not h.get_current_state():
+        # Re-init to prevent stale access tokens
+        h.init(config["accesspointid"])
+
         if not h.get_current_state():
             if not h.get_current_state():
                 return
